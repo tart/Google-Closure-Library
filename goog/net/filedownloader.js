@@ -20,7 +20,6 @@
 
 goog.provide('goog.net.FileDownloader');
 goog.provide('goog.net.FileDownloader.Error');
-goog.provide('goog.net.FileDownloader.Event');
 
 goog.require('goog.Disposable');
 goog.require('goog.async.Deferred');
@@ -266,8 +265,17 @@ goog.net.FileDownloader.prototype.xhrSuccess_ = function(download) {
     return;
   }
 
-  download.blob =
-      goog.fs.getBlob(/** @type {!ArrayBuffer} */ (download.xhr.getResponse()));
+  var resp = /** @type {ArrayBuffer} */ (download.xhr.getResponse());
+  if (!resp) {
+    // This should never happen - it indicates the XHR hasn't completed, has
+    // failed or has been cleaned up.  If it does happen (eg. due to a bug
+    // somewhere) we don't want to pass null to getBlob - it's not valid and
+    // triggers a bug in some versions of WebKit causing it to crash.
+    this.error_(download);
+    return;
+  }
+
+  download.blob = goog.fs.getBlob(resp);
   delete download.xhr;
 
   this.getFile_(download.url, goog.fs.DirectoryEntry.Behavior.CREATE_EXCLUSIVE).
@@ -347,11 +355,11 @@ goog.net.FileDownloader.prototype.writeEnd_ = function(download) {
  *
  * @param {!goog.net.FileDownloader.Download_} download The download object for
  *     this download.
- * @param {goog.fs.Error} err The file error object. Only defined if the
+ * @param {goog.fs.Error=} opt_err The file error object. Only defined if the
  *     error was raised by the file API.
  * @private
  */
-goog.net.FileDownloader.prototype.error_ = function(download, err) {
+goog.net.FileDownloader.prototype.error_ = function(download, opt_err) {
   if (download.file) {
     download.file.remove();
   }
@@ -361,7 +369,8 @@ goog.net.FileDownloader.prototype.error_ = function(download, err) {
   }
 
   delete this.downloads_[download.url];
-  download.deferred.errback(new goog.net.FileDownloader.Error(download, err));
+  download.deferred.errback(
+      new goog.net.FileDownloader.Error(download, opt_err));
 };
 
 
@@ -400,8 +409,12 @@ goog.net.FileDownloader.prototype.getFile_ = function(url, behavior) {
   // distributed roughly evenly throughout the directories due to the hash
   // function, allowing many more than 5000 files to be downloaded.
   //
-  // The leading % ensures that no illegal dirnames are accidentally used.
-  var dirname = '%' + Math.abs(goog.crypt.hash32.encodeString(url)).
+  // The leading ` ensures that no illegal dirnames are accidentally used. % was
+  // previously used, but Chrome has a bug (as of 12.0.725.0 dev) where
+  // filenames are URL-decoded before checking their validity, so filenames
+  // containing e.g. '%3f' (the URL-encoding of :, an invalid character) are
+  // rejected.
+  var dirname = '`' + Math.abs(goog.crypt.hash32.encodeString(url)).
       toString(16).substring(0, 3);
 
   return this.dir_.
@@ -422,8 +435,12 @@ goog.net.FileDownloader.prototype.getFile_ = function(url, behavior) {
  */
 goog.net.FileDownloader.prototype.sanitize_ = function(str) {
   // Add a prefix, since certain prefixes are disallowed for paths. None of the
-  // disallowed prefixes start with '%'.
-  return '%' + str.replace(/[\/\\<>:?*"|]/g, encodeURIComponent);
+  // disallowed prefixes start with '`'. We use ` rather than % for escaping the
+  // filename due to a Chrome bug (as of 12.0.725.0 dev) where filenames are
+  // URL-decoded before checking their validity, so filenames containing e.g.
+  // '%3f' (the URL-encoding of :, an invalid character) are rejected.
+  return '`' + str.replace(/[\/\\<>:?*"|%`]/g, encodeURIComponent).
+      replace(/%/g, '`');
 };
 
 
@@ -461,12 +478,13 @@ goog.net.FileDownloader.prototype.disposeInternal = function() {
  *
  * @param {!goog.net.FileDownloader.Download_} download The download object for
  *     the download in question.
- * @param {goog.fs.Error} fsErr The file error object, if this was a file error.
+ * @param {goog.fs.Error=} opt_fsErr The file error object, if this was a file
+ *     error.
  *
  * @constructor
  * @extends {goog.debug.Error}
  */
-goog.net.FileDownloader.Error = function(download, fsErr) {
+goog.net.FileDownloader.Error = function(download, opt_fsErr) {
   goog.base(this, 'Error capturing URL ' + download.url);
 
   /**
@@ -480,9 +498,9 @@ goog.net.FileDownloader.Error = function(download, fsErr) {
     this.xhrErrorCode = download.xhr.getLastErrorCode();
     this.message += ': XHR failed with status ' + this.xhrStatus +
         ' (error code ' + this.xhrErrorCode + ')';
-  } else if (fsErr) {
-    this.fileError = fsErr;
-    this.message += ': file API failed (' + fsErr.message + ')';
+  } else if (opt_fsErr) {
+    this.fileError = opt_fsErr;
+    this.message += ': file API failed (' + opt_fsErr.message + ')';
   }
 };
 goog.inherits(goog.net.FileDownloader.Error, goog.debug.Error);
@@ -490,7 +508,7 @@ goog.inherits(goog.net.FileDownloader.Error, goog.debug.Error);
 
 /**
  * The status of the XHR. Only set if the error was caused by an XHR failure.
- * @type {number}
+ * @type {number|undefined}
  */
 goog.net.FileDownloader.Error.prototype.xhrStatus;
 
@@ -498,14 +516,14 @@ goog.net.FileDownloader.Error.prototype.xhrStatus;
 /**
  * The error code of the XHR. Only set if the error was caused by an XHR
  * failure.
- * @type {goog.net.ErrorCode}
+ * @type {goog.net.ErrorCode|undefined}
  */
 goog.net.FileDownloader.Error.prototype.xhrErrorCode;
 
 
 /**
  * The file API error. Only set if the error was caused by the file API.
- * @type {goog.fs.Error}
+ * @type {goog.fs.Error|undefined}
  */
 goog.net.FileDownloader.Error.prototype.fileError;
 

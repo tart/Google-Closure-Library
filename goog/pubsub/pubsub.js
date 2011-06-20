@@ -112,7 +112,7 @@ goog.pubsub.PubSub.prototype.publishDepth_ = 0;
  * Returns a subscription key that can be used to unsubscribe the function from
  * the topic via {@link #unsubscribeByKey}.
  *
- * @param {string|number} topic Topic to subscribe to.
+ * @param {string} topic Topic to subscribe to.
  * @param {Function} fn Function to be invoked when a message is published to
  *     the given topic.
  * @param {Object=} opt_context Object in whose context the function is to be
@@ -169,7 +169,7 @@ goog.pubsub.PubSub.prototype.subscribeOnce = function(topic, fn, opt_context) {
  * Unsubscribes a function from a topic.  Only deletes the first match found.
  * Returns a Boolean indicating whether a subscription was removed.
  *
- * @param {string|number} topic Topic to unsubscribe from.
+ * @param {string} topic Topic to unsubscribe from.
  * @param {Function} fn Function to unsubscribe.
  * @param {Object=} opt_context Object in whose context the function was to be
  *     called (the global scope if none).
@@ -233,7 +233,7 @@ goog.pubsub.PubSub.prototype.unsubscribeByKey = function(key) {
  * the order in which they were added, passing all arguments along.  If any of
  * the functions throws an uncaught error, publishing is aborted.
  *
- * @param {string|number} topic Topic to publish to.
+ * @param {string} topic Topic to publish to.
  * @param {...*} var_args Arguments that are applied to each subscription
  *     function.
  * @return {boolean} Whether any subscriptions were called.
@@ -277,7 +277,7 @@ goog.pubsub.PubSub.prototype.publish = function(topic, var_args) {
 
 /**
  * Clears the subscription list for a topic, or all topics if unspecified.
- * @param {(string|number)=} opt_topic Topic to clear (all topics if unspecified).
+ * @param {string=} opt_topic Topic to clear (all topics if unspecified).
  */
 goog.pubsub.PubSub.prototype.clear = function(opt_topic) {
   if (opt_topic) {
@@ -299,7 +299,7 @@ goog.pubsub.PubSub.prototype.clear = function(opt_topic) {
 /**
  * Returns the number of subscriptions to the given topic (or all topics if
  * unspecified).
- * @param {(string|number)=} opt_topic The topic (all topics if unspecified).
+ * @param {string=} opt_topic The topic (all topics if unspecified).
  * @return {number} Number of subscriptions to the topic.
  */
 goog.pubsub.PubSub.prototype.getCount = function(opt_topic) {

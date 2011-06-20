@@ -80,6 +80,18 @@ goog.net.xpc.CrossPageChannel = function(cfg, opt_domHelper) {
    */
   this.domHelper_ = opt_domHelper || goog.dom.getDomHelper();
 
+  // If LOCAL_POLL_URI or PEER_POLL_URI is not available, try using
+  // robots.txt from that host.
+  cfg[goog.net.xpc.CfgFields.LOCAL_POLL_URI] =
+      cfg[goog.net.xpc.CfgFields.LOCAL_POLL_URI] ||
+      goog.uri.utils.getHost(this.domHelper_.getWindow().location.href) +
+          '/robots.txt';
+  // PEER_URI is sometimes undefined in tests.
+  cfg[goog.net.xpc.CfgFields.PEER_POLL_URI] =
+      cfg[goog.net.xpc.CfgFields.PEER_POLL_URI] ||
+      goog.uri.utils.getHost(cfg[goog.net.xpc.CfgFields.PEER_URI] || '') +
+          '/robots.txt';
+
   goog.net.xpc.channels_[this.name] = this;
 
   goog.events.listen(window, 'unload',
@@ -99,7 +111,6 @@ goog.net.xpc.CrossPageChannel.TRANSPORT_SERVICE_ESCAPE_RE_ =
     new RegExp('^%*' + goog.net.xpc.TRANSPORT_SERVICE_ + '$');
 
 
-
 /**
  * Regexp for unescaping service names.
  * @type {RegExp}
@@ -107,6 +118,7 @@ goog.net.xpc.CrossPageChannel.TRANSPORT_SERVICE_ESCAPE_RE_ =
  */
 goog.net.xpc.CrossPageChannel.TRANSPORT_SERVICE_UNESCAPE_RE_ =
     new RegExp('^%+' + goog.net.xpc.TRANSPORT_SERVICE_ + '$');
+
 
 /**
  * The transport.
@@ -179,10 +191,9 @@ goog.net.xpc.CrossPageChannel.prototype.determineTransportType_ = function() {
   } else if (goog.userAgent.IE &&
              this.cfg_[goog.net.xpc.CfgFields.PEER_RELAY_URI]) {
     transportType = goog.net.xpc.TransportTypes.IFRAME_RELAY;
-  } else if (goog.userAgent.IE) {
+  } else if (goog.userAgent.IE && goog.net.xpc.NixTransport.isNixSupported()) {
     transportType = goog.net.xpc.TransportTypes.NIX;
-  } else if (this.cfg_[goog.net.xpc.CfgFields.LOCAL_POLL_URI] &&
-             this.cfg_[goog.net.xpc.CfgFields.PEER_POLL_URI]) {
+  } else {
     transportType = goog.net.xpc.TransportTypes.IFRAME_POLLING;
   }
   return transportType;
@@ -328,8 +339,7 @@ goog.net.xpc.CrossPageChannel.prototype.createPeerIframe = function(
   if (opt_addCfgParam !== false) {
     peerUri.setParameterValue('xpc',
                               goog.json.serialize(
-                                  this.getPeerConfiguration())
-                              );
+                                  this.getPeerConfiguration()));
   }
 
   if (goog.userAgent.GECKO || goog.userAgent.WEBKIT) {
@@ -429,6 +439,7 @@ goog.net.xpc.CrossPageChannel.prototype.close = function() {
   this.state_ = goog.net.xpc.ChannelStates.CLOSED;
   this.transport_.dispose();
   this.transport_ = null;
+  this.connectCb_ = null;
   goog.net.xpc.logger.info('Channel "' + this.name + '" closed');
 };
 
@@ -596,9 +607,7 @@ goog.net.xpc.CrossPageChannel.prototype.isMessageOriginAcceptable_ = function(
 };
 
 
-/**
- * Disposes of the channel.
- */
+/** @inheritDoc */
 goog.net.xpc.CrossPageChannel.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 

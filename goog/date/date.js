@@ -26,6 +26,7 @@ goog.provide('goog.date.weekDay');
 
 goog.require('goog.asserts');
 goog.require('goog.date.DateLike');
+goog.require('goog.i18n.DateTimeSymbols');
 goog.require('goog.string');
 
 
@@ -724,13 +725,13 @@ goog.date.Date = function(opt_year, opt_month, opt_date) {
 };
 
 
-// TODO(anatol): It should use DateTimeSymbols
 /**
  * First day of week. 0 = Mon, 6 = Sun.
  * @type {number}
  * @private
  */
-goog.date.Date.prototype.firstDayOfWeek_ = goog.date.weekDay.MON;
+goog.date.Date.prototype.firstDayOfWeek_ =
+    goog.i18n.DateTimeSymbols.FIRSTDAYOFWEEK;
 
 
 /**
@@ -738,7 +739,8 @@ goog.date.Date.prototype.firstDayOfWeek_ = goog.date.weekDay.MON;
  * @type {number}
  * @private
  */
-goog.date.Date.prototype.firstWeekCutOffDay_ = goog.date.weekDay.THU;
+goog.date.Date.prototype.firstWeekCutOffDay_ =
+    goog.i18n.DateTimeSymbols.FIRSTWEEKCUTOFFDAY;
 
 
 /**
@@ -1220,6 +1222,19 @@ goog.date.Date.prototype.maybeFixDst_ = function(expected) {
  */
 goog.date.Date.prototype.valueOf = function() {
   return this.date_.valueOf();
+};
+
+
+/**
+ * Compares two dates.  May be used as a sorting function.
+ * @see goog.array.sort
+ * @param {!goog.date.DateLike} date1 Date to compare.
+ * @param {!goog.date.DateLike} date2 Date to compare.
+ * @return {number} Comparison result. 0 if dates are the same, less than 0 if
+ *     date1 is earlier than date2, greater than 0 if date1 is later than date2.
+ */
+goog.date.Date.compare = function(date1, date2) {
+  return date1.getTime() - date2.getTime();
 };
 
 

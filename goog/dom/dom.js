@@ -1601,7 +1601,8 @@ goog.dom.isFocusableTabIndex = function(element) {
   var attrNode = element.getAttributeNode('tabindex'); // Must be lowercase!
   if (attrNode && attrNode.specified) {
     var index = element.tabIndex;
-    return goog.isNumber(index) && index >= 0;
+    // NOTE: IE9 puts tabIndex in 16-bit int, e.g. -2 is 65534.
+    return goog.isNumber(index) && index >= 0 && index < 32768;
   }
   return false;
 };
@@ -1638,7 +1639,7 @@ goog.dom.setFocusableTabIndex = function(element, enable) {
  */
 goog.dom.getTextContent = function(node) {
   var textContent;
-  // Note(user): IE9, Opera, and Safara 3 support innerText but they include
+  // Note(user): IE9, Opera, and Safari 3 support innerText but they include
   // text nodes in script tags. So we revert to use a user agent test here.
   if (goog.dom.BrowserFeature.CAN_USE_INNER_TEXT && ('innerText' in node)) {
     textContent = goog.string.canonicalizeNewlines(node.innerText);
@@ -1655,9 +1656,10 @@ goog.dom.getTextContent = function(node) {
   // Strip &#8203; entities. goog.format.insertWordBreaks inserts them in IE8.
   textContent = textContent.replace(/\u200B/g, '');
 
-  // Skip this replacement on IE, which automatically turns &nbsp; into ' '
-  // and / +/ into ' ' when reading innerText.
-  if (!goog.userAgent.IE) {
+  // Skip this replacement on old browsers with working innerText, which
+  // automatically turns &nbsp; into ' ' and / +/ into ' ' when reading
+  // innerText.
+  if (!goog.dom.BrowserFeature.CAN_USE_INNER_TEXT) {
     textContent = textContent.replace(/ +/g, ' ');
   }
   if (textContent != ' ') {
@@ -2449,6 +2451,20 @@ goog.dom.DomHelper.prototype.getNodeTextOffset = goog.dom.getNodeTextOffset;
  */
 goog.dom.DomHelper.prototype.getAncestorByTagNameAndClass =
     goog.dom.getAncestorByTagNameAndClass;
+
+
+/**
+ * Walks up the DOM hierarchy returning the first ancestor that has the passed
+ * class name. If the passed element matches the specified criteria, the
+ * element itself is returned.
+ * @param {Node} element The DOM node to start with.
+ * @param {?string=} opt_class The class name to match (or null/undefined to
+ *     match any node regardless of class name).
+ * @return {Node} The first ancestor that matches the passed criteria, or
+ *     null if none match.
+ */
+goog.dom.DomHelper.prototype.getAncestorByClass =
+    goog.dom.getAncestorByClass;
 
 
 /**

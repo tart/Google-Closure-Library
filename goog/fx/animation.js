@@ -374,6 +374,8 @@ goog.fx.Animation.prototype.pause = function() {
 /**
  * Disposes of the animation.  Stops an animation, fires a 'destroy' event and
  * then removes all the event handlers to clean up memory.
+ * @override
+ * @protected
  */
 goog.fx.Animation.prototype.disposeInternal = function() {
   if (this.state_ != goog.fx.Animation.State.STOPPED) {
@@ -408,11 +410,7 @@ goog.fx.Animation.prototype.cycle = function(now) {
   this.fps_ = 1000 / (now - this.lastFrame);
   this.lastFrame = now;
 
-  if (goog.isFunction(this.accel_)) {
-    this.updateCoords_(this.accel_(this.progress));
-  } else {
-    this.updateCoords_(this.progress);
-  }
+  this.updateCoords_(this.progress);
 
   // Animation has finished.
   if (this.progress == 1) {
@@ -430,11 +428,15 @@ goog.fx.Animation.prototype.cycle = function(now) {
 
 
 /**
- * Calculates current coordinates, based on the current state.
+ * Calculates current coordinates, based on the current state.  Applies
+ * the accelleration function if it exists.
  * @param {number} t Percentage of the way through the animation as a decimal.
  * @private
  */
 goog.fx.Animation.prototype.updateCoords_ = function(t) {
+  if (goog.isFunction(this.accel_)) {
+    t = this.accel_(t);
+  }
   this.coords = new Array(this.startPoint.length);
   for (var i = 0; i < this.startPoint.length; i++) {
     this.coords[i] = (this.endPoint[i] - this.startPoint[i]) * t +

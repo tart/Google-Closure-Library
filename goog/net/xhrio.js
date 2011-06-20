@@ -446,7 +446,7 @@ goog.net.XhrIo.prototype.send = function(url, opt_method, opt_content,
     throw Error('[goog.net.XhrIo] Object is active with another request');
   }
 
-  var method = opt_method || 'GET';
+  var method = opt_method ? opt_method.toUpperCase() : 'GET';
 
   this.lastUri_ = url;
   this.lastError_ = '';
@@ -655,13 +655,15 @@ goog.net.XhrIo.prototype.abort = function(opt_failureCode) {
 
 /**
  * Nullifies all callbacks to reduce risks of leaks.
+ * @override
+ * @protected
  */
 goog.net.XhrIo.prototype.disposeInternal = function() {
   if (this.xhr_) {
     // We explicitly do not call xhr_.abort() unless active_ is still true.
     // This is to avoid unnecessarily aborting a successful request when
-    // disposeInternal() is called in a callback triggered by a complete
-    // response, but in which browser cleanup has not yet finished.
+    // dispose() is called in a callback triggered by a complete response, but
+    // in which browser cleanup has not yet finished.
     // (See http://b/issue?id=1684217.)
     if (this.active_) {
       this.active_ = false;
@@ -848,6 +850,7 @@ goog.net.XhrIo.prototype.isSuccess = function() {
     case goog.net.HttpStatus.OK:
     case goog.net.HttpStatus.NO_CONTENT:
     case goog.net.HttpStatus.NOT_MODIFIED:
+    case goog.net.HttpStatus.QUIRK_IE_NO_CONTENT:
       return true;
 
     default:

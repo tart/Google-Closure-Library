@@ -591,6 +591,12 @@ goog.module.ModuleManager.prototype.maybeFinishBaseLoad_ = function() {
  * @param {string} id A module id.
  */
 goog.module.ModuleManager.prototype.setLoaded = function(id) {
+  if (this.isDisposed()) {
+    this.logger_.warning(
+        'Module loaded after module manager was disposed: ' + id);
+    return;
+  }
+
   this.logger_.info('Module loaded: ' + id);
 
   this.moduleInfoMap_[id].onLoad(goog.bind(this.getModuleContext, this));
@@ -1013,9 +1019,7 @@ goog.module.ModuleManager.prototype.executeCallbacks_ = function(type) {
 };
 
 
-/**
- * Disposes of the module manager.
- */
+/** @inheritDoc */
 goog.module.ModuleManager.prototype.disposeInternal = function() {
   goog.module.ModuleManager.superClass_.disposeInternal.call(this);
 
