@@ -48,9 +48,8 @@ goog.ui.Checkbox = function(opt_checked, opt_domHelper, opt_renderer) {
   var renderer = opt_renderer || goog.ui.CheckboxRenderer.getInstance();
   goog.ui.Control.call(this, null, renderer, opt_domHelper);
   // The checkbox maintains its own tri-state CHECKED state.
-  // The control class maintains DISABLED and FOCUSED (which enable tab
+  // The control class maintains DISABLED, ACTIVE, and FOCUSED (which enable tab
   // navigation, and keyHandling with SPACE).
-  this.setSupportedState(goog.ui.Component.State.ACTIVE, false);
 
   /**
    * Checked state of the checkbox.
@@ -178,15 +177,22 @@ goog.ui.Checkbox.prototype.enterDocument = function() {
     var handler = this.getHandler();
     // Listen to the label, if it was set.
     if (this.label_) {
-      handler.listen(this.label_, goog.events.EventType.CLICK,
-          this.handleClickOrSpace_);
-      // Hovering over label activates checkbox hover state.
-      handler.listen(this.label_, goog.events.EventType.MOUSEOVER,
-          goog.partial(this.setState, goog.ui.Component.State.HOVER, true));
-      handler.listen(this.label_, goog.events.EventType.MOUSEOUT,
-          goog.partial(this.setState, goog.ui.Component.State.HOVER, false));
+      // Any mouse events that happen to the associated label should have the
+      // same effect on the checkbox as if they were happening to the checkbox
+      // itself.
+      handler.
+          listen(this.label_, goog.events.EventType.CLICK,
+              this.handleClickOrSpace_).
+          listen(this.label_, goog.events.EventType.MOUSEOVER,
+              this.handleMouseOver).
+          listen(this.label_, goog.events.EventType.MOUSEOUT,
+              this.handleMouseOut).
+          listen(this.label_, goog.events.EventType.MOUSEDOWN,
+              this.handleMouseDown).
+          listen(this.label_, goog.events.EventType.MOUSEUP,
+              this.handleMouseUp);
     }
-    // Always listen to the checkbox element.
+    // Checkbox needs to explicitly listen for click event.
     handler.listen(this.getElement(),
         goog.events.EventType.CLICK, this.handleClickOrSpace_);
   }
