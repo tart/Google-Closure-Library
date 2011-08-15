@@ -109,15 +109,6 @@ goog.ui.Dialog.prototype.focusHandler_ = null;
 
 
 /**
- * The element outside of the dialog that should get focus after the dialog is
- * hidden.
- * @type {Element}
- * @private
- */
-goog.ui.Dialog.prototype.outsideFocusEl_;
-
-
-/**
  * Whether the escape key closes this dialog.
  * @type {boolean}
  * @private
@@ -538,8 +529,10 @@ goog.ui.Dialog.prototype.createDom = function() {
   this.setElementInternal(dom.createDom('div',
       {'className': this.class_, 'tabIndex': 0},
       this.titleEl_ = dom.createDom('div',
-          {'className': goog.getCssName(this.class_, 'title'),
-            'id': this.getId()},
+          {
+            'className': goog.getCssName(this.class_, 'title'),
+            'id': this.getId()
+          },
           this.titleTextEl_ = dom.createDom('span',
               goog.getCssName(this.class_, 'title-text'), this.title_),
           this.titleCloseEl_ = dom.createDom('span',
@@ -876,16 +869,6 @@ goog.ui.Dialog.prototype.setVisible = function(visible) {
   goog.style.showElement(this.getElement(), visible);
 
   if (visible) {
-    /** @preserveTry */
-    try {
-      if (doc.activeElement) {
-        this.outsideFocusEl_ = doc.activeElement;
-      }
-    } catch (e) {
-      // NOTE(user): Apparently document.activeElement will sometimes
-      // throw exceptions in IE. If it does, we'll just assume that there
-      // isn't an active element.
-    }
     this.focus();
   }
 
@@ -895,18 +878,6 @@ goog.ui.Dialog.prototype.setVisible = function(visible) {
     this.getHandler().unlisten(this.buttonEl_,
         goog.events.EventType.CLICK, this.onButtonClick_);
     this.dispatchEvent(goog.ui.Dialog.EventType.AFTER_HIDE);
-
-    // Focus the previously focused element. If the previously focused element
-    // is the document body, don't bother.
-    if (this.outsideFocusEl_ && this.outsideFocusEl_ != doc.body) {
-      /** @preserveTry */
-      try {
-        this.outsideFocusEl_.focus();
-      } catch (e) {
-        // Swallow this. IE can throw an error if the element cannot be focused.
-      }
-      this.outsideFocusEl_ = null;
-    }
     if (this.disposeOnHide_) {
       this.dispose();
     }
@@ -982,26 +953,6 @@ goog.ui.Dialog.prototype.focus = function() {
 
 
 /**
- * Sets the element outside of the dialog that will get focus after the dialog
- * is hidden.
- * @param {Element} element The element outside of the dialog.
- */
-goog.ui.Dialog.prototype.setOutsideFocusElement = function(element) {
-  this.outsideFocusEl_ = element;
-};
-
-
-/**
- * Gets the element outside of the dialog that will get focus after the dialog
- * is hidden.
- * @return {Element} The element outside of the dialog.
- */
-goog.ui.Dialog.prototype.getOutsideFocusElement = function() {
-  return this.outsideFocusEl_;
-};
-
-
-/**
  * Make the background element the size of the document.
  *
  * NOTE(user): We must hide the background element before measuring the
@@ -1038,8 +989,16 @@ goog.ui.Dialog.prototype.resizeBackground_ = function() {
 
   if (this.draggable_) {
     var dialogSize = goog.style.getSize(this.getElement());
-    this.dragger_.limits =
-        new goog.math.Rect(0, 0, w - dialogSize.width, h - dialogSize.height);
+    if (goog.style.getComputedPosition(this.getElement()) == 'fixed') {
+      // Ensure position:fixed dialogs can't be dragged beyond the viewport.
+      this.dragger_.limits = new goog.math.Rect(0, 0,
+          Math.max(0, viewSize.width - dialogSize.width),
+          Math.max(0, viewSize.height - dialogSize.height));
+    } else {
+      this.dragger_.limits = new goog.math.Rect(0, 0,
+          w - dialogSize.width,
+          h - dialogSize.height);
+    }
   }
 };
 
