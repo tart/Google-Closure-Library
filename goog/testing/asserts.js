@@ -595,9 +595,12 @@ goog.testing.asserts.findDifferences = function(expected, actual) {
  *
  * See asserts_test.html for more interesting edge cases.
  *
- * @param {*} a
- * @param {*} b
- * @param {*=} opt_c
+ * The first comparison object provided is the expected value, the second is
+ * the actual.
+ *
+ * @param {*} a Assertion message or comparison object.
+ * @param {*} b Comparison object.
+ * @param {*=} opt_c Comparison object, if an assertion message was provided.
  */
 function assertObjectEquals(a, b, opt_c) {
   _validateArguments(2, arguments);
@@ -607,6 +610,27 @@ function assertObjectEquals(a, b, opt_c) {
   var differences = goog.testing.asserts.findDifferences(v1, v2);
 
   _assert(failureMessage, !differences, differences);
+}
+
+
+/**
+ * Compares two arbitrary objects for non-equalness.
+ *
+ * All the same caveats as for assertObjectEquals apply here:
+ * Undefined values may be confused for missing values, or vice versa.
+ *
+ * @param {*} a Assertion message or comparison object.
+ * @param {*} b Comparison object.
+ * @param {*=} opt_c Comparison object, if an assertion message was provided.
+ */
+function assertObjectNotEquals(a, b, opt_c) {
+  _validateArguments(2, arguments);
+  var v1 = nonCommentArg(1, 2, arguments);
+  var v2 = nonCommentArg(2, 2, arguments);
+  var failureMessage = commentArg(2, arguments) ? commentArg(2, arguments) : '';
+  var differences = goog.testing.asserts.findDifferences(v1, v2);
+
+  _assert(failureMessage, differences, 'Objects should not be equal');
 }
 
 
@@ -1025,6 +1049,7 @@ goog.exportSymbol('assertNonEmptyString', assertNonEmptyString);
 goog.exportSymbol('assertNaN', assertNaN);
 goog.exportSymbol('assertNotNaN', assertNotNaN);
 goog.exportSymbol('assertObjectEquals', assertObjectEquals);
+goog.exportSymbol('assertObjectNotEquals', assertObjectNotEquals);
 goog.exportSymbol('assertArrayEquals', assertArrayEquals);
 goog.exportSymbol('assertElementsEquals', assertElementsEquals);
 goog.exportSymbol('assertSameElements', assertSameElements);
