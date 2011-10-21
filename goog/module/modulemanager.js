@@ -18,6 +18,7 @@
  */
 
 goog.provide('goog.module.ModuleManager');
+goog.provide('goog.module.ModuleManager.CallbackType');
 goog.provide('goog.module.ModuleManager.FailureType');
 
 goog.require('goog.Disposable');
@@ -1025,7 +1026,7 @@ goog.module.ModuleManager.prototype.executeCallbacks_ = function(type) {
 };
 
 
-/** @inheritDoc */
+/** @override */
 goog.module.ModuleManager.prototype.disposeInternal = function() {
   goog.module.ModuleManager.superClass_.disposeInternal.call(this);
 

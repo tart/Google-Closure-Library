@@ -123,6 +123,13 @@ goog.ui.LabelInput.prototype.decorateInternal = function(element) {
     this.label_ = element.getAttribute('label') || '';
   }
 
+  // Check if we're attaching to an element that already has focus.
+  if (goog.dom.getActiveElement(goog.dom.getOwnerDocument(element)) ==
+      element) {
+    this.hasFocus_ = true;
+    goog.dom.classes.remove(this.getElement(), this.LABEL_CLASS_NAME);
+  }
+
   if (goog.ui.LabelInput.SUPPORTS_PLACEHOLDER_) {
     this.getElement().placeholder = this.label_;
     return;
@@ -220,7 +227,7 @@ goog.ui.LabelInput.prototype.detachEvents_ = function() {
 };
 
 
-/** @inheritDoc */
+/** @override */
 goog.ui.LabelInput.prototype.disposeInternal = function() {
   goog.ui.LabelInput.superClass_.disposeInternal.call(this);
   this.detachEvents_();
@@ -384,8 +391,8 @@ goog.ui.LabelInput.prototype.clear = function() {
 goog.ui.LabelInput.prototype.reset = function() {
   if (this.hasChanged()) {
     this.clear();
+    this.check_();
   }
-  this.check_();
 };
 
 
