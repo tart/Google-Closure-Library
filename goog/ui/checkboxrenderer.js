@@ -51,7 +51,7 @@ goog.addSingletonGetter(goog.ui.CheckboxRenderer);
 goog.ui.CheckboxRenderer.CSS_CLASS = goog.getCssName('goog-checkbox');
 
 
-/** @inheritDoc */
+/** @override */
 goog.ui.CheckboxRenderer.prototype.createDom = function(checkbox) {
   var element = checkbox.getDomHelper().createDom(
       'span', this.getClassNames(checkbox).join(' '));
@@ -63,7 +63,7 @@ goog.ui.CheckboxRenderer.prototype.createDom = function(checkbox) {
 };
 
 
-/** @inheritDoc */
+/** @override */
 goog.ui.CheckboxRenderer.prototype.decorate = function(checkbox, element) {
   // The superclass implementation takes care of common attributes; we only
   // need to set the checkbox state.
@@ -84,6 +84,9 @@ goog.ui.CheckboxRenderer.prototype.decorate = function(checkbox, element) {
     checked = goog.ui.Checkbox.State.UNCHECKED;
   }
   checkbox.setCheckedInternal(checked);
+
+  goog.dom.a11y.setState(element, goog.dom.a11y.State.CHECKED,
+                         this.ariaStateFromCheckState_(checked));
 
   return element;
 };
@@ -142,7 +145,7 @@ goog.ui.CheckboxRenderer.prototype.ariaStateFromCheckState_ = function(state) {
 };
 
 
-/** @inheritDoc */
+/** @override */
 goog.ui.CheckboxRenderer.prototype.getCssClass = function() {
   return goog.ui.CheckboxRenderer.CSS_CLASS;
 };
