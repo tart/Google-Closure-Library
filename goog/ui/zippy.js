@@ -19,6 +19,7 @@
  */
 
 goog.provide('goog.ui.Zippy');
+goog.provide('goog.ui.Zippy.Events');
 goog.provide('goog.ui.ZippyEvent');
 
 goog.require('goog.dom');
@@ -127,11 +128,15 @@ goog.inherits(goog.ui.Zippy, goog.events.EventTarget);
  * @type {Object}
  */
 goog.ui.Zippy.Events = {
-  TOGGLE: 'toggle'
+  TOGGLE: 'toggle',
+  // Zippy will dispatch an ACTION event for user interaction. Mimics
+  // {@code goog.ui.Controls#performActionInternal} by first changing
+  // the toggle state and then dispatching an ACTION event.
+  ACTION: 'action'
 };
 
 
-/** @inheritDoc */
+/** @override */
 goog.ui.Zippy.prototype.disposeInternal = function() {
   if (this.elHeader_) {
     goog.events.removeAll(this.elHeader_);
@@ -258,6 +263,7 @@ goog.ui.Zippy.prototype.onHeaderKeyDown_ = function(event) {
       event.keyCode == goog.events.KeyCodes.SPACE) {
 
     this.toggle();
+    this.dispatchActionEvent_();
 
     // Prevent enter key from submiting form.
     event.preventDefault();
@@ -275,6 +281,19 @@ goog.ui.Zippy.prototype.onHeaderKeyDown_ = function(event) {
  */
 goog.ui.Zippy.prototype.onHeaderClick_ = function(event) {
   this.toggle();
+  this.dispatchActionEvent_();
+};
+
+
+/**
+ * Dispatch an ACTION event whenever there is user interaction with the header.
+ * Please note that after the zippy state change is completed a TOGGLE event
+ * will be dispatched. However, the TOGGLE event is dispatch on every toggle,
+ * including programmatic call to {@code #toggle}.
+ * @private
+ */
+goog.ui.Zippy.prototype.dispatchActionEvent_ = function() {
+  this.dispatchEvent(new goog.events.Event(goog.ui.Zippy.Events.ACTION, this));
 };
 
 
