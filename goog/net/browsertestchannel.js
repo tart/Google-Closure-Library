@@ -270,6 +270,8 @@ goog.net.BrowserTestChannel.prototype.checkBlocked_ = function() {
       goog.bind(this.checkBlockedCallback_, this),
       goog.net.BrowserTestChannel.BLOCKED_RETRIES_,
       goog.net.BrowserTestChannel.BLOCKED_PAUSE_BETWEEN_RETRIES_);
+  this.notifyServerReachabilityEvent(
+      goog.net.BrowserChannel.ServerReachability.REQUEST_MADE);
 };
 
 
@@ -288,6 +290,14 @@ goog.net.BrowserTestChannel.prototype.checkBlockedCallback_ = function(
     goog.net.BrowserChannel.notifyStatEvent(
         goog.net.BrowserChannel.Stat.CHANNEL_BLOCKED);
     this.channel_.testConnectionBlocked(this);
+  }
+
+  // We don't dispatch a REQUEST_FAILED server reachability event when the
+  // block request fails, as such a failure is not a good signal that the
+  // server has actually become unreachable.
+  if (succeeded) {
+    this.notifyServerReachabilityEvent(
+        goog.net.BrowserChannel.ServerReachability.REQUEST_SUCCEEDED);
   }
 };
 
@@ -538,4 +548,15 @@ goog.net.BrowserTestChannel.prototype.checkForEarlyNonBuffered_ =
   // have been sent. For all other browser's we skip the timing test.
   return goog.net.ChannelRequest.supportsXhrStreaming() ||
       ms < goog.net.BrowserTestChannel.MIN_TIME_EXPECTED_BETWEEN_DATA_;
+};
+
+
+/**
+ * Notifies the channel of a fine grained network event.
+ * @param {goog.net.BrowserChannel.ServerReachability} reachabilityType The
+ *     reachability event type.
+ */
+goog.net.BrowserTestChannel.prototype.notifyServerReachabilityEvent =
+    function(reachabilityType) {
+  this.channel_.notifyServerReachabilityEvent(reachabilityType);
 };

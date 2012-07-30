@@ -88,7 +88,7 @@ goog.inherits(goog.net.XhrIo, goog.events.EventTarget);
 /**
  * Response types that may be requested for XMLHttpRequests.
  * @enum {string}
- * @see http://dev.w3.org/2006/webapi/XMLHttpRequest-2/#the-responsetype-attribute
+ * @see http://www.w3.org/TR/XMLHttpRequest/#the-responsetype-attribute
  */
 goog.net.XhrIo.ResponseType = {
   DEFAULT: '',
@@ -120,7 +120,7 @@ goog.net.XhrIo.CONTENT_TYPE_HEADER = 'Content-Type';
  * The pattern matching the 'http' and 'https' URI schemes
  * @type {!RegExp}
  */
-goog.net.XhrIo.HTTP_SCHEME_PATTERN = /^https?:?$/i;
+goog.net.XhrIo.HTTP_SCHEME_PATTERN = /^https?$/i;
 
 
 /**
@@ -356,7 +356,7 @@ goog.net.XhrIo.prototype.responseType_ = goog.net.XhrIo.ResponseType.DEFAULT;
  * more recent browsers that support this part of the HTTP Access Control
  * standard.
  *
- * @see http://dev.w3.org/2006/webapi/XMLHttpRequest-2/#withcredentials
+ * @see http://www.w3.org/TR/XMLHttpRequest/#the-withcredentials-attribute
  *
  * @type {boolean}
  * @private
@@ -729,18 +729,21 @@ goog.net.XhrIo.prototype.onReadyStateChangeHelper_ = function() {
 
       this.active_ = false;
 
-      // Call the specific callbacks for success or failure. Only call the
-      // success if the status is 200 (HTTP_OK) or 304 (HTTP_CACHED)
-      if (this.isSuccess()) {
-        this.dispatchEvent(goog.net.EventType.COMPLETE);
-        this.dispatchEvent(goog.net.EventType.SUCCESS);
-      } else {
-        this.lastErrorCode_ = goog.net.ErrorCode.HTTP_ERROR;
-        this.lastError_ = this.getStatusText() + ' [' + this.getStatus() + ']';
-        this.dispatchErrors_();
+      try {
+        // Call the specific callbacks for success or failure. Only call the
+        // success if the status is 200 (HTTP_OK) or 304 (HTTP_CACHED)
+        if (this.isSuccess()) {
+          this.dispatchEvent(goog.net.EventType.COMPLETE);
+          this.dispatchEvent(goog.net.EventType.SUCCESS);
+        } else {
+          this.lastErrorCode_ = goog.net.ErrorCode.HTTP_ERROR;
+          this.lastError_ =
+              this.getStatusText() + ' [' + this.getStatus() + ']';
+          this.dispatchErrors_();
+        }
+      } finally {
+        this.cleanUpXhr_();
       }
-
-      this.cleanUpXhr_();
     }
   }
 };
@@ -811,21 +814,10 @@ goog.net.XhrIo.prototype.isComplete = function() {
  * @return {boolean} Whether the request completed with a success.
  */
 goog.net.XhrIo.prototype.isSuccess = function() {
-  switch (this.getStatus()) {
-    case 0:         // Used for local XHR requests
-      return !this.isLastUriEffectiveSchemeHttp_();
-
-    case goog.net.HttpStatus.OK:
-    case goog.net.HttpStatus.CREATED:
-    case goog.net.HttpStatus.ACCEPTED:
-    case goog.net.HttpStatus.NO_CONTENT:
-    case goog.net.HttpStatus.NOT_MODIFIED:
-    case goog.net.HttpStatus.QUIRK_IE_NO_CONTENT:
-      return true;
-
-    default:
-      return false;
-  }
+  var status = this.getStatus();
+  // A zero status code is considered successful for local files.
+  return goog.net.HttpStatus.isSuccess(status) ||
+      status === 0 && !this.isLastUriEffectiveSchemeHttp_();
 };
 
 
@@ -835,22 +827,8 @@ goog.net.XhrIo.prototype.isSuccess = function() {
  * @private
  */
 goog.net.XhrIo.prototype.isLastUriEffectiveSchemeHttp_ = function() {
-  var lastUriScheme = goog.isString(this.lastUri_) ?
-      goog.uri.utils.getScheme(this.lastUri_) :
-      (/** @type {!goog.Uri} */ this.lastUri_).getScheme();
-  // if it's an absolute URI, we're done.
-  if (lastUriScheme) {
-    return goog.net.XhrIo.HTTP_SCHEME_PATTERN.test(lastUriScheme);
-  }
-
-  // if it's a relative URI, it inherits the scheme of the page.
-  if (self.location) {
-    return goog.net.XhrIo.HTTP_SCHEME_PATTERN.test(self.location.protocol);
-  } else {
-    // This case can occur from a web worker in Firefox 3.5 . All other browsers
-    // with web workers support self.location from the worker.
-    return true;
-  }
+  var scheme = goog.uri.utils.getEffectiveScheme(String(this.lastUri_));
+  return goog.net.XhrIo.HTTP_SCHEME_PATTERN.test(scheme);
 };
 
 
@@ -986,7 +964,7 @@ goog.net.XhrIo.prototype.getResponseJson = function(opt_xssiPrefix) {
  * try to emulate it.
  *
  * Emulating the response means following the rules laid out at
- * http://dev.w3.org/2006/webapi/XMLHttpRequest-2/#the-response-attribute.
+ * http://www.w3.org/TR/XMLHttpRequest/#the-response-attribute
  *
  * On browsers with no support for this (Chrome < 10, Firefox < 4, etc), only
  * response types of DEFAULT or TEXT may be used, and the response returned will
