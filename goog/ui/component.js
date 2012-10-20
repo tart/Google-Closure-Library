@@ -981,7 +981,7 @@ goog.ui.Component.prototype.addChildAt = function(child, index, opt_render) {
   if (child.getParent() == this) {
     goog.object.set(this.childIndex_, child.getId(), child);
     goog.array.remove(this.children_, child);
-
+    goog.dom.removeNode(child.getElement());
   // Add the child to this component.  goog.object.add() throws an error if
   // a child with the same ID already exists.
   } else {
