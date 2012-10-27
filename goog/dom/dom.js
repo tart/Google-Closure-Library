@@ -645,7 +645,7 @@ goog.dom.createDom_ = function(doc, args) {
       var clone = {};
       goog.object.extend(clone, attributes);
       attributes = clone;
-      delete attributes.type;
+      delete attributes['type'];
     }
     tagNameArr.push('>');
     tagName = tagNameArr.join('');
