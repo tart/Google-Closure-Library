@@ -147,7 +147,8 @@ goog.editor.BrowserFeature = {
       goog.userAgent.WEBKIT || goog.userAgent.OPERA,
 
   // Whether clicking on an editable link will take you to that site.
-  FOLLOWS_EDITABLE_LINKS: goog.userAgent.WEBKIT,
+  FOLLOWS_EDITABLE_LINKS: goog.userAgent.WEBKIT ||
+      goog.userAgent.IE && goog.userAgent.isVersion('9'),
 
   // Whether this browser has document.activeElement available.
   HAS_ACTIVE_ELEMENT:
@@ -250,7 +251,8 @@ goog.editor.BrowserFeature = {
   SUPPORTS_HTML5_FILE_DRAGGING: (goog.userAgent.product.CHROME &&
                                  goog.userAgent.product.isVersion('4')) ||
       (goog.userAgent.product.SAFARI && goog.userAgent.isVersion('533')) ||
-      (goog.userAgent.GECKO && goog.userAgent.isVersion('2.0')),
+      (goog.userAgent.GECKO && goog.userAgent.isVersion('2.0')) ||
+      (goog.userAgent.IE && goog.userAgent.isVersion('10')),
 
   // Version of Opera that supports the opera-defaultBlock execCommand to change
   // the default block inserted when [return] is pressed. Note that this only is
