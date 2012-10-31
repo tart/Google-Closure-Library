@@ -328,8 +328,9 @@ goog.ui.MenuButton.prototype.handleKeyEventInternal = function(e) {
 
   if (e.keyCode == goog.events.KeyCodes.DOWN ||
       e.keyCode == goog.events.KeyCodes.UP ||
-      e.keyCode == goog.events.KeyCodes.SPACE) {
-    // Menu is closed, and the user hit the down/up/space key; open menu.
+      e.keyCode == goog.events.KeyCodes.SPACE ||
+      e.keyCode == goog.events.KeyCodes.ENTER) {
+    // Menu is closed, and the user hit the down/up/space/enter key; open menu.
     this.setOpen(true);
     return true;
   }
@@ -737,6 +738,17 @@ goog.ui.MenuButton.prototype.setOpen = function(open, opt_e) {
       this.attachPopupListeners_(open);
     }
   }
+};
+
+
+/**
+ * Resets the MenuButton's size.  This is useful for cases where items are added
+ * or removed from the menu and scrollOnOverflow is on.  In those cases the
+ * menu will not behave correctly and resize itself unless this is called
+ * (usually followed by positionMenu()).
+ */
+goog.ui.MenuButton.prototype.invalidateMenuSize = function() {
+  this.originalSize_ = undefined;
 };
 
 
