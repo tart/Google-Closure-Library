@@ -253,10 +253,15 @@ goog.editor.Field.EventType = {
    */
   BLUR: 'blur',
   /**
-   * Dispach before tab is handled by the field.  This is a legacy way
+   * Dispatched before tab is handled by the field.  This is a legacy way
    * of controlling tab behavior.  Use trog.plugins.AbstractTabHandler now.
    */
   BEFORETAB: 'beforetab',
+  /**
+   * Dispatched after the iframe containing the field is resized, so that UI
+   * components which contain it can respond.
+   */
+  IFRAME_RESIZED: 'ifrsz',
   /**
    * Dispatched when the selection changes.
    * Use handleSelectionChange from plugin API instead of listening
@@ -446,8 +451,10 @@ goog.editor.Field.prototype.getOriginalElement = function() {
 goog.editor.Field.prototype.addListener = function(type, listener, opt_capture,
                                                    opt_handler) {
   var elem = this.getElement();
-  // On Gecko, keyboard events only reliably fire on the document element.
-  if (elem && goog.editor.BrowserFeature.USE_DOCUMENT_FOR_KEY_EVENTS) {
+  // On Gecko, keyboard events only reliably fire on the document element when
+  // using an iframe.
+  if (goog.editor.BrowserFeature.USE_DOCUMENT_FOR_KEY_EVENTS && elem &&
+      this.usesIframe()) {
     elem = elem.ownerDocument;
   }
   this.eventRegister.listen(elem, type, listener, opt_capture, opt_handler);
@@ -1011,7 +1018,10 @@ goog.editor.Field.MUTATION_EVENTS_GECKO = [
  * @protected
  */
 goog.editor.Field.prototype.setupMutationEventHandlersGecko = function() {
-  if (goog.editor.BrowserFeature.HAS_DOM_SUBTREE_MODIFIED_EVENT) {
+  // Always use DOMSubtreeModified on Gecko when not using an iframe so that
+  // DOM mutations outside the Field do not trigger handleMutationEventGecko_.
+  if (goog.editor.BrowserFeature.HAS_DOM_SUBTREE_MODIFIED_EVENT ||
+      !this.usesIframe()) {
     this.eventRegister.listen(this.getElement(), 'DOMSubtreeModified',
         this.handleMutationEventGecko_);
   } else {

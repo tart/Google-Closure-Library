@@ -532,12 +532,12 @@ goog.async.Deferred.prototype.fire_ = function() {
 
 /**
  * Creates a deferred that always succeeds.
- * @param {*} res The result.
+ * @param {*=} opt_result The result.
  * @return {!goog.async.Deferred} The deferred object.
  */
-goog.async.Deferred.succeed = function(res) {
+goog.async.Deferred.succeed = function(opt_result) {
   var d = new goog.async.Deferred();
-  d.callback(res);
+  d.callback(opt_result);
   return d;
 };
 
@@ -592,7 +592,7 @@ goog.async.Deferred.cancelled = function() {
  * </pre>
  *
  * @param {*} value Deferred or non-deferred value to pass to the callback.
- * @param {!function(this:T, ?=):?} callback The callback to execute.
+ * @param {!function(this:T, ?):?} callback The callback to execute.
  * @param {T=} opt_scope An optional scope to call the callback in.
  * @return {!goog.async.Deferred}
  * @template T

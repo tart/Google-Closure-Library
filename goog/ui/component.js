@@ -981,6 +981,7 @@ goog.ui.Component.prototype.addChildAt = function(child, index, opt_render) {
   if (child.getParent() == this) {
     goog.object.set(this.childIndex_, child.getId(), child);
     goog.array.remove(this.children_, child);
+    goog.dom.removeNode(child.getElement());
 
   // Add the child to this component.  goog.object.add() throws an error if
   // a child with the same ID already exists.
@@ -1116,7 +1117,7 @@ goog.ui.Component.prototype.getChildIds = function() {
  */
 goog.ui.Component.prototype.getChild = function(id) {
   // Use childIndex_ for O(1) access by ID.
-  return (this.childIndex_ && id) ? (/** @type {goog.ui.Component} */
+  return (this.childIndex_ && id) ? /** @type {goog.ui.Component} */ (
       goog.object.get(this.childIndex_, id)) || null : null;
 };
 
